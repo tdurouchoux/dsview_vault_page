@@ -8,6 +8,16 @@ export interface ColorScheme {
   tertiary: string
   highlight: string
   textHighlight: string
+  tagNode?: string
+  tagNodeStroke?: string
+  contentNode?: string
+  contentNodeStroke?: string
+  conceptTopicNode?: string,
+  datasetTopicNode?: string,
+  libraryTopicNode?: string,
+  modelTopicNode?: string,
+  platformTopicNode?: string,
+  toolTopicNode?: string,
 }
 
 interface Colors {
@@ -155,6 +165,17 @@ ${stylesheet.join("\n\n")}
   --highlight: ${theme.colors.lightMode.highlight};
   --textHighlight: ${theme.colors.lightMode.textHighlight};
 
+  --contentNode: ${theme.colors.lightMode.contentNode ?? theme.colors.lightMode.secondary};
+  --contentNodeStroke: ${theme.colors.lightMode.contentNodeStroke ?? theme.colors.lightMode.secondary};
+  --tagNode: ${theme.colors.lightMode.tagNode ?? theme.colors.lightMode.light};
+  --tagNodeStroke: ${theme.colors.lightMode.tagNodeStroke ?? theme.colors.lightMode.tertiary};
+  --conceptTopicNode: ${theme.colors.lightMode.conceptTopicNode ?? theme.colors.lightMode.secondary};
+  --datasetTopicNode: ${theme.colors.lightMode.datasetTopicNode ?? theme.colors.lightMode.secondary};
+  --libraryTopicNode: ${theme.colors.lightMode.libraryTopicNode ?? theme.colors.lightMode.secondary};
+  --modelTopicNode: ${theme.colors.lightMode.modelTopicNode ?? theme.colors.lightMode.secondary};
+  --platformTopicNode: ${theme.colors.lightMode.platformTopicNode ?? theme.colors.lightMode.secondary};
+  --toolTopicNode: ${theme.colors.lightMode.toolTopicNode ?? theme.colors.lightMode.secondary};
+
   --titleFont: "${getFontSpecificationName(theme.typography.title || theme.typography.header)}", ${DEFAULT_SANS_SERIF};
   --headerFont: "${getFontSpecificationName(theme.typography.header)}", ${DEFAULT_SANS_SERIF};
   --bodyFont: "${getFontSpecificationName(theme.typography.body)}", ${DEFAULT_SANS_SERIF};
@@ -171,6 +192,17 @@ ${stylesheet.join("\n\n")}
   --tertiary: ${theme.colors.darkMode.tertiary};
   --highlight: ${theme.colors.darkMode.highlight};
   --textHighlight: ${theme.colors.darkMode.textHighlight};
+
+  --contentNode: ${theme.colors.darkMode.contentNode ?? theme.colors.darkMode.secondary};
+  --contentNodeStroke: ${theme.colors.darkMode.contentNodeStroke ?? theme.colors.darkMode.secondary};
+  --tagNode: ${theme.colors.darkMode.tagNode ?? theme.colors.darkMode.light};
+  --tagNodeStroke: ${theme.colors.darkMode.tagNodeStroke ?? theme.colors.darkMode.tertiary};
+  --conceptTopicNode: ${theme.colors.darkMode.conceptTopicNode ?? theme.colors.darkMode.secondary};
+  --datasetTopicNode: ${theme.colors.darkMode.datasetTopicNode ?? theme.colors.darkMode.secondary};
+  --libraryTopicNode: ${theme.colors.darkMode.libraryTopicNode ?? theme.colors.darkMode.secondary};
+  --modelTopicNode: ${theme.colors.darkMode.modelTopicNode ?? theme.colors.darkMode.secondary};
+  --platformTopicNode: ${theme.colors.darkMode.platformTopicNode ?? theme.colors.darkMode.secondary};
+  --toolTopicNode: ${theme.colors.darkMode.toolTopicNode ?? theme.colors.darkMode.secondary};
 }
 `
 }

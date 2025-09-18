@@ -1,0 +1,3 @@
+[submodule "dsview_vault"]
+	path = dsview_vault
+	url = https://github.com/tdurouchoux/dsview_vault.git

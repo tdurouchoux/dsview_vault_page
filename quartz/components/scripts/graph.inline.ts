@@ -31,6 +31,14 @@ type NodeData = {
   id: SimpleSlug
   text: string
   tags: string[]
+  sourcePath?: string
+  isContentNode?: boolean
+  isConceptTopicNode?: boolean
+  isDatasetTopicNode?: boolean
+  isLibraryTopicNode?: boolean
+  isModelTopicNode?: boolean
+  isPlatformTopicNode?: boolean
+  isToolTopicNode?: boolean
 } & SimulationNodeDatum
 
 type SimpleLinkData = {
@@ -144,11 +152,43 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
 
   const nodes = [...neighbourhood].map((url) => {
-    const text = url.startsWith("tags/") ? "#" + url.substring(5) : (data.get(url)?.title ?? url)
+    const details = data.get(url)
+    const text = url.startsWith("tags/") ? "#" + url.substring(5) : (details?.title ?? url)
+    const filePath = details?.filePath
+    const isContentNode = !!filePath && (
+      filePath.startsWith("contents/") || filePath.includes("/contents/")
+    )
+    const isConceptTopicNode = !!filePath && (
+      filePath.startsWith("Concept/") || filePath.includes("/Concept/")
+    )
+    const isDatasetTopicNode = !!filePath && (
+      filePath.startsWith("Dataset/") || filePath.includes("/Dataset/")
+    )
+    const isLibraryTopicNode = !!filePath && (
+      filePath.startsWith("Library/") || filePath.includes("/Library/")
+    )
+    const isModelTopicNode = !!filePath && (
+      filePath.startsWith("Model/") || filePath.includes("/Model/")
+    )
+    const isPlatformTopicNode = !!filePath && (
+      filePath.startsWith("Platform/") || filePath.includes("/Platform/")
+    )
+    const isToolTopicNode = !!filePath && (
+      filePath.startsWith("Tool/") || filePath.includes("/Tool/")
+    )
+
     return {
       id: url,
       text,
-      tags: data.get(url)?.tags ?? [],
+      tags: details?.tags ?? [],
+      sourcePath: filePath,
+      isContentNode,
+      isConceptTopicNode,
+      isDatasetTopicNode,
+      isLibraryTopicNode,
+      isModelTopicNode,
+      isPlatformTopicNode,
+      isToolTopicNode,
     }
   })
   const graphData: { nodes: NodeData[]; links: LinkData[] } = {
@@ -184,6 +224,16 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     "--dark",
     "--darkgray",
     "--bodyFont",
+    "--tagNode",
+    "--tagNodeStroke",
+    "--contentNode",
+    "--contentNodeStroke",
+    "--conceptTopicNode",
+    "--datasetTopicNode",
+    "--libraryTopicNode",
+    "--modelTopicNode",
+    "--platformTopicNode",
+    "--toolTopicNode",
   ] as const
   const computedStyleMap = cssVars.reduce(
     (acc, key) => {
@@ -193,13 +243,34 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     {} as Record<(typeof cssVars)[number], string>,
   )
 
+  const tagFillColor = (computedStyleMap["--tagNode"] || computedStyleMap["--light"]).trim()
+  const tagStrokeColor = (computedStyleMap["--tagNodeStroke"] || computedStyleMap["--tertiary"]).trim()
+  const contentFillColor = (computedStyleMap["--contentNode"] || computedStyleMap["--secondary"]).trim()
+  const contentStrokeColor = (computedStyleMap["--contentNodeStroke"] || computedStyleMap["--secondary"]).trim()
+
   // calculate color
   const color = (d: NodeData) => {
     const isCurrent = d.id === slug
     if (isCurrent) {
       return computedStyleMap["--secondary"]
-    } else if (visited.has(d.id) || d.id.startsWith("tags/")) {
+    } else if (d.id.startsWith("tags/")) {
       return computedStyleMap["--tertiary"]
+    } else if (visited.has(d.id)) {
+      return computedStyleMap["--tertiary"]
+    } else if (d.isContentNode) {
+      return contentFillColor
+    } else if (d.isConceptTopicNode) {
+      return computedStyleMap["--conceptTopicNode"]
+    } else if (d.isDatasetTopicNode) {
+      return computedStyleMap["--datasetTopicNode"]
+    } else if (d.isLibraryTopicNode) {
+      return computedStyleMap["--libraryTopicNode"]
+    } else if (d.isModelTopicNode) {
+      return computedStyleMap["--modelTopicNode"]
+    } else if (d.isPlatformTopicNode) {
+      return computedStyleMap["--platformTopicNode"]
+    } else if (d.isToolTopicNode) {
+      return computedStyleMap["--toolTopicNode"]
     } else {
       return computedStyleMap["--gray"]
     }
@@ -399,7 +470,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       cursor: "pointer",
     })
       .circle(0, 0, nodeRadius(n))
-      .fill({ color: isTagNode ? computedStyleMap["--light"] : color(n) })
+      .fill({ color: isTagNode ? tagFillColor : color(n) })
       .on("pointerover", (e) => {
         updateHoverInfo(e.target.label)
         oldLabelOpacity = label.alpha
@@ -416,7 +487,9 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       })
 
     if (isTagNode) {
-      gfx.stroke({ width: 2, color: computedStyleMap["--tertiary"] })
+      gfx.stroke({ width: 2, color: tagStrokeColor })
+    } else if (n.isContentNode) {
+      gfx.stroke({ width: 1.5, color: contentStrokeColor })
     }
 
     nodesContainer.addChild(gfx)

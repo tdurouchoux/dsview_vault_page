@@ -8,7 +8,7 @@ import * as Plugin from "./quartz/plugins"
  */
 const config: QuartzConfig = {
   configuration: {
-    pageTitle: "Quartz 4",
+    pageTitle: "Dsview vault",
     pageTitleSuffix: "",
     enableSPA: true,
     enablePopovers: true,
@@ -38,6 +38,16 @@ const config: QuartzConfig = {
           tertiary: "#84a59d",
           highlight: "rgba(143, 159, 169, 0.15)",
           textHighlight: "#fff23688",
+          tagNode: "#4e4e4e",        // new
+          tagNodeStroke: "#7b97aa",
+          contentNode: "#d65c5c",
+          contentNodeStroke: "#d65c5c",
+          conceptTopicNode: "#cb75d7",
+          datasetTopicNode: "#8921a6",
+          libraryTopicNode: "#d6ad5c",
+          modelTopicNode: "#5cc2d6",
+          platformTopicNode: "#5c60d6",
+          toolTopicNode: "#519085",
         },
         darkMode: {
           light: "#161618",
@@ -49,6 +59,16 @@ const config: QuartzConfig = {
           tertiary: "#84a59d",
           highlight: "rgba(143, 159, 169, 0.15)",
           textHighlight: "#b3aa0288",
+          tagNode: "#393639",        // new
+          tagNodeStroke: "#7b97aa",
+          contentNode: "#d65c5c",
+          contentNodeStroke: "#d65c5c",
+          conceptTopicNode: "#cb75d7",
+          datasetTopicNode: "#8921a6",
+          libraryTopicNode: "#d6ad5c",
+          modelTopicNode: "#5cc2d6",
+          platformTopicNode: "#5c60d6",
+          toolTopicNode: "#519085",
         },
       },
     },

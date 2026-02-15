@@ -16,8 +16,15 @@ import {
 } from "d3"
 import { Text, Graphics, Application, Container, Circle } from "pixi.js"
 import { Group as TweenGroup, Tween as Tweened } from "@tweenjs/tween.js"
-import { registerEscapeHandler, removeAllChildren } from "./util"
-import { FullSlug, SimpleSlug, getFullSlug, resolveRelative, simplifySlug } from "../../util/path"
+import { registerEscapeHandler, removeAllChildren, fetchCanonical } from "./util"
+import {
+  FullSlug,
+  SimpleSlug,
+  getFullSlug,
+  resolveRelative,
+  simplifySlug,
+  normalizeRelativeURLs,
+} from "../../util/path"
 import { D3Config } from "../Graph"
 
 type GraphicsInfo = {
@@ -155,27 +162,20 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     const details = data.get(url)
     const text = url.startsWith("tags/") ? "#" + url.substring(5) : (details?.title ?? url)
     const filePath = details?.filePath
-    const isContentNode = !!filePath && (
-      filePath.startsWith("contents/") || filePath.includes("/contents/")
-    )
-    const isConceptTopicNode = !!filePath && (
-      filePath.startsWith("Concept/") || filePath.includes("/Concept/")
-    )
-    const isDatasetTopicNode = !!filePath && (
-      filePath.startsWith("Dataset/") || filePath.includes("/Dataset/")
-    )
-    const isLibraryTopicNode = !!filePath && (
-      filePath.startsWith("Library/") || filePath.includes("/Library/")
-    )
-    const isModelTopicNode = !!filePath && (
-      filePath.startsWith("Model/") || filePath.includes("/Model/")
-    )
-    const isPlatformTopicNode = !!filePath && (
-      filePath.startsWith("Platform/") || filePath.includes("/Platform/")
-    )
-    const isToolTopicNode = !!filePath && (
-      filePath.startsWith("Tool/") || filePath.includes("/Tool/")
-    )
+    const isContentNode =
+      !!filePath && (filePath.startsWith("contents/") || filePath.includes("/contents/"))
+    const isConceptTopicNode =
+      !!filePath && (filePath.startsWith("Concept/") || filePath.includes("/Concept/"))
+    const isDatasetTopicNode =
+      !!filePath && (filePath.startsWith("Dataset/") || filePath.includes("/Dataset/"))
+    const isLibraryTopicNode =
+      !!filePath && (filePath.startsWith("Library/") || filePath.includes("/Library/"))
+    const isModelTopicNode =
+      !!filePath && (filePath.startsWith("Model/") || filePath.includes("/Model/"))
+    const isPlatformTopicNode =
+      !!filePath && (filePath.startsWith("Platform/") || filePath.includes("/Platform/"))
+    const isToolTopicNode =
+      !!filePath && (filePath.startsWith("Tool/") || filePath.includes("/Tool/"))
 
     return {
       id: url,
@@ -244,9 +244,15 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   )
 
   const tagFillColor = (computedStyleMap["--tagNode"] || computedStyleMap["--light"]).trim()
-  const tagStrokeColor = (computedStyleMap["--tagNodeStroke"] || computedStyleMap["--tertiary"]).trim()
-  const contentFillColor = (computedStyleMap["--contentNode"] || computedStyleMap["--secondary"]).trim()
-  const contentStrokeColor = (computedStyleMap["--contentNodeStroke"] || computedStyleMap["--secondary"]).trim()
+  const tagStrokeColor = (
+    computedStyleMap["--tagNodeStroke"] || computedStyleMap["--tertiary"]
+  ).trim()
+  const contentFillColor = (
+    computedStyleMap["--contentNode"] || computedStyleMap["--secondary"]
+  ).trim()
+  const contentStrokeColor = (
+    computedStyleMap["--contentNodeStroke"] || computedStyleMap["--secondary"]
+  ).trim()
 
   // calculate color
   const color = (d: NodeData) => {
@@ -318,6 +324,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
 
   let dragStartTime = 0
+  let dragStartPos = { x: 0, y: 0 }
   let dragging = false
 
   function renderLinks() {
@@ -350,7 +357,8 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     tweens.get("label")?.stop()
     const tweenGroup = new TweenGroup()
 
-    const defaultScale = 1 / scale
+    const zoomK = currentTransform?.k ?? 1
+    const defaultScale = 1 / (scale * zoomK)
     const activeScale = defaultScale * 1.1
     for (const n of nodeRenderData) {
       const nodeId = n.simulationData.id
@@ -417,6 +425,136 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     renderLabels()
   }
 
+  // Popover preview on graph node hover (Alt/Option + hover)
+  const domParser = new DOMParser()
+  let activePopover: HTMLElement | null = null
+  let popoverTimeout: ReturnType<typeof setTimeout> | null = null
+  let altKeyDown = false
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Alt") {
+      altKeyDown = true
+      // trigger popover if already hovering a node
+      if (hoveredNodeId && !activePopover) {
+        const node = nodeRenderData.find((n) => n.simulationData.id === hoveredNodeId)
+        if (node) {
+          const rect = graph.getBoundingClientRect()
+          const nodeX =
+            (node.simulationData.x! + width / 2) * currentTransform.k +
+            currentTransform.x +
+            rect.left
+          const nodeY =
+            (node.simulationData.y! + height / 2) * currentTransform.k +
+            currentTransform.y +
+            rect.top
+          clearGraphPopover()
+          popoverTimeout = setTimeout(() => {
+            showGraphPopover(hoveredNodeId as SimpleSlug, nodeX, nodeY)
+          }, 300)
+        }
+      }
+    }
+  }
+  const onKeyUp = (e: KeyboardEvent) => {
+    if (e.key === "Alt") altKeyDown = false
+  }
+  document.addEventListener("keydown", onKeyDown)
+  document.addEventListener("keyup", onKeyUp)
+
+  let hideTimeout: ReturnType<typeof setTimeout> | null = null
+
+  function clearGraphPopover() {
+    if (popoverTimeout) {
+      clearTimeout(popoverTimeout)
+      popoverTimeout = null
+    }
+    if (hideTimeout) {
+      clearTimeout(hideTimeout)
+      hideTimeout = null
+    }
+    if (activePopover) {
+      activePopover.remove()
+      activePopover = null
+    }
+  }
+
+  function scheduleHidePopover() {
+    if (hideTimeout) clearTimeout(hideTimeout)
+    hideTimeout = setTimeout(() => {
+      clearGraphPopover()
+    }, 300)
+  }
+
+  function cancelHidePopover() {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout)
+      hideTimeout = null
+    }
+  }
+
+  async function showGraphPopover(nodeId: SimpleSlug, clientX: number, clientY: number) {
+    clearGraphPopover()
+    const targetUrl = new URL(resolveRelative(fullSlug, nodeId), window.location.toString())
+    targetUrl.hash = ""
+    targetUrl.search = ""
+
+    const popoverId = `graph-popover-${targetUrl.pathname}`
+    const existing = document.getElementById(popoverId)
+    if (existing) {
+      existing.classList.add("active-popover")
+      activePopover = existing
+      positionGraphPopover(existing, clientX, clientY)
+      return
+    }
+
+    const response = await fetchCanonical(targetUrl).catch(() => null)
+    if (!response) return
+
+    const contentType = response.headers.get("Content-Type")?.split(";")[0] ?? ""
+    if (!contentType.startsWith("text/html")) return
+
+    const contents = await response.text()
+    const html = domParser.parseFromString(contents, "text/html")
+    normalizeRelativeURLs(html, targetUrl)
+    html.querySelectorAll("[id]").forEach((el) => {
+      el.id = `graph-popover-internal-${el.id}`
+    })
+    const elts = [...html.getElementsByClassName("popover-hint")]
+    if (elts.length === 0) return
+
+    const popoverElement = document.createElement("div")
+    popoverElement.id = popoverId
+    popoverElement.classList.add("popover", "active-popover")
+    const popoverInner = document.createElement("div")
+    popoverInner.classList.add("popover-inner")
+    popoverElement.appendChild(popoverInner)
+    elts.forEach((elt) => popoverInner.appendChild(elt))
+
+    popoverElement.addEventListener("mouseenter", cancelHidePopover)
+    popoverElement.addEventListener("mouseleave", scheduleHidePopover)
+
+    document.body.appendChild(popoverElement)
+    activePopover = popoverElement
+    positionGraphPopover(popoverElement, clientX, clientY)
+  }
+
+  function positionGraphPopover(el: HTMLElement, clientX: number, clientY: number) {
+    const popoverWidth = 400
+    const popoverMaxHeight = 300
+    const margin = 10
+
+    let x = clientX + margin
+    let y = clientY + margin
+
+    if (x + popoverWidth > window.innerWidth) {
+      x = clientX - popoverWidth - margin
+    }
+    if (y + popoverMaxHeight > window.innerHeight) {
+      y = clientY - popoverMaxHeight - margin
+    }
+
+    el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`
+  }
+
   tweens.forEach((tween) => tween.stop())
   tweens.clear()
 
@@ -477,6 +615,16 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
         if (!dragging) {
           renderPixiFromD3()
         }
+        // show popover only when Alt/Option key is held
+        if (altKeyDown) {
+          clearGraphPopover()
+          const rect = graph.getBoundingClientRect()
+          const nodeX = (n.x! + width / 2) * currentTransform.k + currentTransform.x + rect.left
+          const nodeY = (n.y! + height / 2) * currentTransform.k + currentTransform.y + rect.top
+          popoverTimeout = setTimeout(() => {
+            showGraphPopover(nodeId as SimpleSlug, nodeX, nodeY)
+          }, 300)
+        }
       })
       .on("pointerleave", () => {
         updateHoverInfo(null)
@@ -484,6 +632,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
         if (!dragging) {
           renderPixiFromD3()
         }
+        scheduleHidePopover()
       })
 
     if (isTagNode) {
@@ -539,6 +688,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
             fy: event.subject.fy,
           }
           dragStartTime = Date.now()
+          dragStartPos = { x: event.x, y: event.y }
           dragging = true
         })
         .on("drag", function dragged(event) {
@@ -552,8 +702,11 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           event.subject.fy = null
           dragging = false
 
-          // if the time between mousedown and mouseup is short, we consider it a click
-          if (Date.now() - dragStartTime < 500) {
+          // only navigate if it looks like a click (short time + barely moved)
+          const dx = event.x - dragStartPos.x
+          const dy = event.y - dragStartPos.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (Date.now() - dragStartTime < 300 && dist < 5) {
             const node = graphData.nodes.find((n) => n.id === event.subject.id) as NodeData
             const targ = resolveRelative(fullSlug, node.id)
             window.spaNavigate(new URL(targ, window.location.toString()))
@@ -583,11 +736,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           stage.position.set(transform.x, transform.y)
 
           // zoom adjusts opacity of labels too
-          const scale = transform.k * opacityScale
-          let scaleOpacity = Math.max((scale - 1) / 3.75, 0)
+          const zoomScale = transform.k * opacityScale
+          let scaleOpacity = Math.max((zoomScale - 1) / 3.75, 0)
           const activeNodes = nodeRenderData.filter((n) => n.active).flatMap((n) => n.label)
 
+          // counter-scale labels so they keep a constant visual size
+          const labelScale = 1 / (scale * transform.k)
           for (const label of labelsContainer.children) {
+            label.scale.set(labelScale)
             if (!activeNodes.includes(label)) {
               label.alpha = scaleOpacity
             }
@@ -625,6 +781,9 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   requestAnimationFrame(animate)
   return () => {
     stopAnimation = true
+    clearGraphPopover()
+    document.removeEventListener("keydown", onKeyDown)
+    document.removeEventListener("keyup", onKeyUp)
     app.destroy()
   }
 }

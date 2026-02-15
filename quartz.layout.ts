@@ -50,8 +50,8 @@ export const defaultContentPageLayout: PageLayout = {
         repelForce: 0.35, // how much nodes should repel each other
         centerForce: 0.3, // how much force to use when trying to center the nodes
         linkDistance: 30, // how long should the links be by default?
-        fontSize: 0.8, // what size should the node labels be?
-        opacityScale: 1, // how quickly do we fade out the labels when zooming out?
+        fontSize: 1.5, // what size should the node labels be?
+        opacityScale: 0.8, // how quickly do we fade out the labels when zooming out?
         removeTags: [], // what tags to remove from the graph
         showTags: false, // whether to show tags in the graph
         enableRadial: false, // whether to constrain the graph, similar to Obsidian
@@ -62,20 +62,19 @@ export const defaultContentPageLayout: PageLayout = {
         depth: -1,
         scale: 0.9,
         repelForce: 0.3,
-        centerForce: 0.4,
-        linkDistance: 30,
-        fontSize: 0.8,
+        centerForce: 0.6,
+        linkDistance: 15,
+        fontSize: 1.2,
         opacityScale: 1,
         removeTags: [], // what tags to remove from the graph
         showTags: true, // whether to show tags in the graph
-        enableRadial: true, // whether to constrain the graph, similar to Obsidian
+        enableRadial: false, // whether to constrain the graph, similar to Obsidian
       },
     }),
     Component.DesktopOnly(Component.TableOfContents()),
     Component.Backlinks(),
   ],
 }
-
 
 // components for pages that display lists of pages  (e.g. tags or folders)
 export const defaultListPageLayout: PageLayout = {

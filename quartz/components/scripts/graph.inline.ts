@@ -104,11 +104,10 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     enableRadial,
   } = JSON.parse(graph.dataset["cfg"]!) as D3Config
 
-  type GraphContentDetails = Pick<ContentDetails, "title" | "links" | "tags" | "filePath">
-  const data: Map<SimpleSlug, GraphContentDetails> = new Map(
+  const data: Map<SimpleSlug, ContentDetails> = new Map(
     Object.entries<ContentDetails>(await fetchData).map(([k, v]) => [
       simplifySlug(k as FullSlug),
-      { title: v.title, links: v.links, tags: v.tags, filePath: v.filePath },
+      v,
     ]),
   )
   const links: SimpleLinkData[] = []

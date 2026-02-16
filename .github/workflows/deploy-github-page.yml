@@ -6,7 +6,11 @@ on:
   push:
     branches:
       - main
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> b0ad614238462b013eccc57f5370e41f89305d7b
 permissions:
   contents: read
   pages: write

@@ -104,10 +104,11 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     enableRadial,
   } = JSON.parse(graph.dataset["cfg"]!) as D3Config
 
-  const data: Map<SimpleSlug, ContentDetails> = new Map(
+  type GraphContentDetails = Pick<ContentDetails, "title" | "links" | "tags" | "filePath">
+  const data: Map<SimpleSlug, GraphContentDetails> = new Map(
     Object.entries<ContentDetails>(await fetchData).map(([k, v]) => [
       simplifySlug(k as FullSlug),
-      v,
+      { title: v.title, links: v.links, tags: v.tags, filePath: v.filePath },
     ]),
   )
   const links: SimpleLinkData[] = []
@@ -191,25 +192,35 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       isToolTopicNode,
     }
   })
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]))
   const graphData: { nodes: NodeData[]; links: LinkData[] } = {
     nodes,
     links: links
       .filter((l) => neighbourhood.has(l.source) && neighbourhood.has(l.target))
       .map((l) => ({
-        source: nodes.find((n) => n.id === l.source)!,
-        target: nodes.find((n) => n.id === l.target)!,
+        source: nodeMap.get(l.source)!,
+        target: nodeMap.get(l.target)!,
       })),
+  }
+
+  // precompute link counts per node for radius calculation
+  const linkCounts = new Map<string, number>()
+  for (const l of graphData.links) {
+    linkCounts.set(l.source.id, (linkCounts.get(l.source.id) ?? 0) + 1)
+    linkCounts.set(l.target.id, (linkCounts.get(l.target.id) ?? 0) + 1)
   }
 
   const width = graph.offsetWidth
   const height = Math.max(graph.offsetHeight, 250)
 
   // we virtualize the simulation and use pixi to actually render it
+  const nodeCount = graphData.nodes.length
+  const collideIterations = nodeCount > 500 ? 1 : nodeCount > 200 ? 2 : 3
   const simulation: Simulation<NodeData, LinkData> = forceSimulation<NodeData>(graphData.nodes)
     .force("charge", forceManyBody().strength(-100 * repelForce))
     .force("center", forceCenter().strength(centerForce))
     .force("link", forceLink(graphData.links).distance(linkDistance))
-    .force("collide", forceCollide<NodeData>((n) => nodeRadius(n)).iterations(3))
+    .force("collide", forceCollide<NodeData>((n) => nodeRadius(n)).iterations(collideIterations))
 
   const radius = (Math.min(width, height) / 2) * 0.8
   if (enableRadial) simulation.force("radial", forceRadial(radius).strength(0.2))
@@ -283,10 +294,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
 
   function nodeRadius(d: NodeData) {
-    const numLinks = graphData.links.filter(
-      (l) => l.source.id === d.id || l.target.id === d.id,
-    ).length
-    return 2 + Math.sqrt(numLinks)
+    return 2 + Math.sqrt(linkCounts.get(d.id) ?? 0)
   }
 
   let hoveredNodeId: string | null = null
@@ -423,6 +431,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     renderNodes()
     renderLinks()
     renderLabels()
+    ensureAnimating()
   }
 
   // Popover preview on graph node hover (Alt/Option + hover)
@@ -671,6 +680,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     linkRenderData.push(linkRenderDatum)
   }
 
+  // free intermediate build data no longer needed
+  data.clear()
+  nodeMap.clear()
+  linkCounts.clear()
+  neighbourhood.clear()
+  links.length = 0
+  tags.length = 0
+
   let currentTransform = zoomIdentity
   if (enableDrag) {
     select<HTMLCanvasElement, NodeData | undefined>(app.canvas).call(
@@ -748,13 +765,21 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
               label.alpha = scaleOpacity
             }
           }
+
+          ensureAnimating()
         }),
     )
   }
 
   let stopAnimation = false
+  let animationRunning = false
+
   function animate(time: number) {
-    if (stopAnimation) return
+    if (stopAnimation) {
+      animationRunning = false
+      return
+    }
+
     for (const n of nodeRenderData) {
       const { x, y } = n.simulationData
       if (!x || !y) continue
@@ -775,9 +800,29 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
 
     tweens.forEach((t) => t.update(time))
     app.renderer.render(stage)
+
+    // stop the loop once simulation has cooled down and no tweens are active
+    if (simulation.alpha() < simulation.alphaMin() && tweens.size === 0) {
+      animationRunning = false
+      return
+    }
+
     requestAnimationFrame(animate)
   }
 
+  function ensureAnimating() {
+    if (!animationRunning && !stopAnimation) {
+      animationRunning = true
+      requestAnimationFrame(animate)
+    }
+  }
+
+  // restart animation on simulation reheat
+  simulation.on("tick", () => {
+    ensureAnimating()
+  })
+
+  animationRunning = true
   requestAnimationFrame(animate)
   return () => {
     stopAnimation = true

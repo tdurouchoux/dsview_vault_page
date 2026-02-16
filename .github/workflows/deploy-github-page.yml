@@ -1,25 +1,21 @@
 name: Deploy Quartz site to GitHub Pages
-
+ 
 on:
   schedule:
-    - cron: "0 8 * * *" # Runs at 08:00 UTC every day
+    - cron: '0 8 * * *' # Runs at 08:00 UTC every day
   push:
     branches:
       - main
-<<<<<<< HEAD
-
-=======
  
->>>>>>> b0ad614238462b013eccc57f5370e41f89305d7b
 permissions:
   contents: read
   pages: write
   id-token: write
-
+ 
 concurrency:
   group: "pages"
   cancel-in-progress: false
-
+ 
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -42,7 +38,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
-
+ 
   deploy:
     needs: build
     environment:

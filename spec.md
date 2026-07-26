@@ -220,22 +220,3 @@ Actions workflow, `deploy-github-page.yml`:
   was changed from a `v4` branch to `main` at one point, and the cron time was tuned
   from a placeholder to `07:00 UTC` — no functional significance beyond "when the daily
   rebuild runs."
-
-## 15. [TODO — planned, not yet implemented] Event-driven deploy instead of cron
-
-Currently the site rebuilds on a daily cron plus on push to this repo's own `main` —
-not when new content actually lands in the `dsview_vault` submodule repo. Planned change
-(to land as part of/alongside the v5 migration):
-
-- Replace (or supplement) the cron trigger with a cross-repo `repository_dispatch`:
-  `dsview_vault`'s push workflow calls the GitHub API to dispatch a
-  `content-updated` event to `dsview_vault_page`, whose workflow adds
-  `on: repository_dispatch: types: [content-updated]` as a trigger.
-- Requires a scoped token (fine-grained PAT limited to `dsview_vault_page` with
-  `contents: read` + `actions: write`, or a GitHub App installation) stored as a secret
-  in the `dsview_vault` repo.
-- Net effect: the deploy becomes near-real-time on new vault content instead of
-  waiting up to 24h for the next cron tick; cron can then be dropped entirely or kept
-  only as a rare fallback (e.g. weekly).
-- Not yet implemented — call out during the v5 migration as an opportunity to land
-  both changes together rather than touching the workflow twice.

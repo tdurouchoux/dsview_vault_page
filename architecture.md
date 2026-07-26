@@ -93,19 +93,6 @@ dsview_vault/
 └── Tool/       → tool topic pages                     → teal nodes
 ```
 
-## Planned changes (not yet implemented)
-
-| File | Change type | Summary |
-|---|---|---|
-| `.github/workflows/deploy-github-page.yml` (this repo) | **TODO** | Add `on: repository_dispatch: types: [content-updated]` trigger; drop or downgrade the daily cron once event-driven deploy is in place |
-| new workflow in the **`dsview_vault`** repo (separate repo, not tracked here) | **TODO** | On push to `dsview_vault`, `curl`/API call to dispatch a `content-updated` `repository_dispatch` event to `dsview_vault_page`, using a fine-grained PAT (or GitHub App token) scoped to `contents: read` + `actions: write` on this repo, stored as a secret in `dsview_vault` |
-
-Goal: move deployment from cron-polling to event-driven — rebuild `dsview_vault_page`
-as soon as new content is committed to `dsview_vault`, instead of waiting for the next
-daily cron tick. See `spec.md` §15 for the full rationale/tradeoffs. Flag this as an
-item to land alongside the v5 migration rather than as a separate follow-up touching
-the workflow file twice.
-
 ## Commit-level history of the customization (for context)
 
 Chronological list of commits after the fork point (`73e08c6..HEAD`), oldest first —

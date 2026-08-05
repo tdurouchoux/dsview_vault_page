@@ -1,3 +1,21 @@
 @use "./variables.scss" as *;
 
 // put your custom CSS here!
+
+// Widen the right sidebar (desktop only) to give the graph overview more room.
+// Left sidebar keeps $sidePanelWidth; right sidebar grows independently.
+// Scoped to pages where the graph actually renders in the right sidebar
+// (content pages) via :has(), rather than a page-type page-by-page toggle,
+// since page type isn't exposed as a DOM attribute.
+$rightPanelWidth: 500px;
+
+@media all and ($desktop) {
+  #quartz-body:has(.sidebar.right .graph) {
+    grid-template-columns: #{$sidePanelWidth} auto #{$rightPanelWidth};
+  }
+}
+
+// Taller graph preview to match the wider panel.
+.graph .graph-outer {
+  height: 380px;
+}

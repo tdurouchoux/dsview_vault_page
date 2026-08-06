@@ -166,13 +166,14 @@ plugins:
     layout:
       position: left
       priority: 50
-  # - source: "https://github.com/tdurouchoux/dsview-vault-graph"
-  - source: "../dsview-vault-graph"
+  - source: "https://github.com/tdurouchoux/dsview-vault-graph"
     enabled: true
     layout:
       position: right
       priority: 10
     options:
+      excludeSlugs:
+        - "contents/content-base.base"
       nodeColors:
         - path: contents/
           color: "#d65c5c"
@@ -196,7 +197,7 @@ plugins:
         repelForce: 0.35
         centerForce: 0.3
         linkDistance: 30
-        fontSize: 1.5
+        fontSize: 0.9
         opacityScale: 0.8
         removeTags: []
         showTags: false
@@ -209,12 +210,13 @@ plugins:
         repelForce: 0.3
         centerForce: 0.6
         linkDistance: 15
-        fontSize: 1.2
-        opacityScale: 1
+        fontSize: 0.8
+        opacityScale: 8
         removeTags: []
         showTags: true
         enableRadial: false
         initialZoom: 0.30
+        topLabelFraction: 0.02
       indexPreview:
         initialZoom: 0.20
   - source: "@quartz-community/search"
@@ -336,4 +338,4 @@ layout:
     canvas: {}
     bases:
       exclude:
-        - graph
+        - dsview-vault-graph

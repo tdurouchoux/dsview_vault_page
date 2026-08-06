@@ -42,3 +42,51 @@ rule, the most specific (longest) path wins. The current page you're
 viewing always keeps its usual highlight color regardless of matching
 rules, but for every other node a path match now takes priority over the
 default "already visited" tint. Path matching is case-insensitive.
+
+**Progressive label rendering (fixes a mobile crash on the global graph)** —
+Node labels in every graph view are now created only when they're about to
+become visible and discarded again once they're not, instead of every
+label being built up front for every node on the page. On the global graph
+(2000+ notes), building every label up front was allocating far more GPU
+memory than mobile browsers can handle, crashing the tab when opening the
+graph on a phone. Also capped how sharp labels render on high-pixel-density
+screens, and long note titles are now truncated with `…` in graph labels
+(they previously could be wide enough to fail to render at all on some
+mobile GPUs). No visible behavior change on desktop beyond slightly less
+oversharp label text.
+
+**Fewer, more relevant labels on the global graph** — The full-screen global
+graph (and the index-page preview) no longer show a label for every node by
+default — only the most-connected ~2% of nodes do (`graph.globalGraph.topLabelFraction`,
+currently `0.02`), still fading in with zoom the same way labels always
+have. Every other node's label now appears when you hover that node **or
+any node directly connected to it**, and disappears again on mouse-out.
+This only changes which labels show by default on the full-screen/global
+and index-preview graphs; the per-page local graph (shown in the sidebar
+and its expanded view) still shows/fades every node's label ambiently as
+before. The index-page preview box specifically shows no ambient labels at
+all, however busy the graph — hovering is the only way to see a label
+there.
+
+**Neighbour labels on hover for the local graph** — Hovering a node in the
+local graph (sidebar preview and expanded view) now also reveals the
+labels of every node directly connected to it, not just the hovered node's
+own label, matching the hover behaviour already used on the full-screen
+global graph. Labels disappear again on mouse-out, same as before.
+
+**More forgiving node hover/click targets** — Hovering, clicking, or
+dragging a graph node used to require landing the cursor exactly on its
+(often tiny) visible circle, especially for low-connectivity nodes. Every
+node now has a larger invisible hit area around it, independent of how
+small its circle is drawn, making nodes noticeably easier to target across
+all graph views.
+
+**Per-slug exclusion from the graph** — Added a `graph.excludeSlugs` config
+option (a list of page slugs) that hides specific pages from every graph
+view entirely — local, global, and index preview — including any links to
+or from them. Needed because the existing `unlisted: true` frontmatter
+convention has no effect on Obsidian Bases pages (`.base` files): Bases
+pages are synthesized as virtual pages after the normal frontmatter
+pipeline runs, so `unlisted-pages` never sees them. Currently used to hide
+`contents/content-base.base`. The excluded page itself is still emitted and
+reachable by direct URL, same as `unlisted` pages.

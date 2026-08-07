@@ -173,7 +173,7 @@ plugins:
       priority: 10
     options:
       excludeSlugs:
-        - "contents/content-base.base"
+        - "vault-base.base"
       nodeColors:
         - path: contents/
           color: "#d65c5c"

@@ -2,10 +2,10 @@
   "version": "1.0.0",
   "plugins": {
     "dsview-vault-graph": {
-      "source": "../dsview-vault-graph",
-      "resolved": "/Users/tdurouchoux/Documents/projects/dsview-vault-graph",
-      "commit": "local",
-      "installedAt": "2026-08-05T21:35:51.613Z"
+      "source": "https://github.com/tdurouchoux/dsview-vault-graph",
+      "resolved": "https://github.com/tdurouchoux/dsview-vault-graph",
+      "commit": "11b8831763cc277b5ab2f07b16be60108ed1da3d",
+      "installedAt": "2026-08-07T07:54:35.909Z"
     }
   }
 }

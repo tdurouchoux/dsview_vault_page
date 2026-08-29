@@ -14,21 +14,19 @@ and the graph box is taller (380px vs. the default 250px). The left sidebar
 and mobile/tablet layouts are unaffected. Other page types that don't show
 the graph (folders, tags, bases) keep the default sidebar width.
 
-## `quartz/components/Header.tsx`
+**Dsview logo next to the site title** — In the left sidebar, the site
+title (top of the left column, wherever the `page-title` plugin renders)
+now shows the small Dsview icon immediately to its left, on every page
+that shows the left sidebar. Purely decorative (no alt text, not a
+separate link) — it doesn't repeat or duplicate the title text.
 
-**Dsview logo in the page header** — The site header (top of the center
-column, above the page title/breadcrumbs) now always shows the Dsview logo
-as a small image, on every page that renders a header (all page types
-except full-width/minimal ones like canvas pages). Previously the header
-rendered nothing at all, since no component was configured to appear in
-the `header` layout position. The logo links to nothing (not clickable);
-it's purely a brand mark alongside whatever else ends up in that position
-in the future.
+## `quartz/static/icon.png`
 
-**Dsview icon as the site favicon** — `quartz/static/icon.png` (the source
-image both the browser-tab `<link rel="icon">` and the favicon-emitter
-plugin read from) is now the Dsview icon instead of the default Quartz
-icon, so the Dsview logo shows in the browser tab/bookmarks.
+**Dsview icon as the site favicon** — This is the source image both the
+browser-tab `<link rel="icon">` and the favicon-emitter plugin read from;
+it's now the Dsview icon instead of the default Quartz icon, so the
+Dsview logo shows in the browser tab/bookmarks. Same small icon image
+referenced by the site-title logo above.
 
 ## `../dsview-vault-graph` (forked graph plugin)
 

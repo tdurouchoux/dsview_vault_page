@@ -19,3 +19,24 @@ $rightPanelWidth: 500px;
 .graph .graph-outer {
   height: 380px;
 }
+
+// Dsview logo next to the site title in the left sidebar.
+// url() here resolves relative to the emitted stylesheet (which sits at the
+// site root next to static/), so this path is correct regardless of baseUrl
+// or how deep the current page is nested.
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &::before {
+    content: "";
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    background-image: url("static/icon.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+}

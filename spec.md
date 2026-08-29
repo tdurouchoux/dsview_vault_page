@@ -14,6 +14,22 @@ and the graph box is taller (380px vs. the default 250px). The left sidebar
 and mobile/tablet layouts are unaffected. Other page types that don't show
 the graph (folders, tags, bases) keep the default sidebar width.
 
+## `quartz/components/Header.tsx`
+
+**Dsview logo in the page header** — The site header (top of the center
+column, above the page title/breadcrumbs) now always shows the Dsview logo
+as a small image, on every page that renders a header (all page types
+except full-width/minimal ones like canvas pages). Previously the header
+rendered nothing at all, since no component was configured to appear in
+the `header` layout position. The logo links to nothing (not clickable);
+it's purely a brand mark alongside whatever else ends up in that position
+in the future.
+
+**Dsview icon as the site favicon** — `quartz/static/icon.png` (the source
+image both the browser-tab `<link rel="icon">` and the favicon-emitter
+plugin read from) is now the Dsview icon instead of the default Quartz
+icon, so the Dsview logo shows in the browser tab/bookmarks.
+
 ## `../dsview-vault-graph` (forked graph plugin)
 
 **Global graph shown in the index-page preview box** — `index.md` is an

@@ -1,17 +1,7 @@
-import { pathToRoot, joinSegments } from "../util/path"
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 
-const Header: QuartzComponent = ({ children, cfg, fileData }: QuartzComponentProps) => {
-  const url = new URL(`https://${cfg.baseUrl ?? "example.com"}`)
-  const baseDir = fileData.slug === "404" ? url.pathname : pathToRoot(fileData.slug!)
-  const logoPath = joinSegments(baseDir, "static/dsview-icon.png")
-
-  return (
-    <header>
-      <img src={logoPath} alt={cfg.pageTitle} class="header-logo" />
-      {children}
-    </header>
-  )
+const Header: QuartzComponent = ({ children }: QuartzComponentProps) => {
+  return children.length > 0 ? <header>{children}</header> : null
 }
 
 Header.css = `
@@ -26,12 +16,6 @@ header {
 header h1 {
   margin: 0;
   flex: auto;
-}
-
-header .header-logo {
-  height: 2.5rem;
-  width: auto;
-  flex-shrink: 0;
 }
 `
 
